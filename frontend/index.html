@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Platform</title>
+    <link rel="stylesheet" href="styles.css">
+
+
+</head>
+
+<body>
+    <h1>Auction Platform</h1>
+    <p>Contract Address: <span id="contractAddress"></span></p>
+    <p>Highest Bidder: <span id="highestBidder"></span></p>
+    <p>Highest Bid: <span id="highestBid"></span> ETH</p>
+    <p>Auction End Time: <span id="auctionEndTime"></span></p>
+    <button onclick="placeInitialBid()">Place Initial Bid</button>
+    <label for="bidAmount">Bid Amount (ETH): </label>
+    <input type="number" id="bidAmount" step="0.01" min="0" required>
+    <button onclick="placeBid()">Place Bid</button>
+    <button onclick="endAuction()">End Auction</button>
+
+    <script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js"></script>
+    <script>
+        const contractAddress = 'YOUR_CONTRACT_ADDRESS'; // Replace with your actual contract address
+        const contractABI = [
+            // Paste your contract ABI here
+        ];
+
+        const provider = new ethers.providers.JsonRpcProvider('YOUR_INFURA_URL'); // Replace with your Infura URL or other Ethereum node
+
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        async function updateContractInfo() {
+            const auctioneer = await contract.auctioneer();
+            const highestBidder = await contract.highestBidder();
+            const highestBid = await contract.highestBid();
+            const auctionEndTime = await contract.auctionEndTime();
+
+            document.getElementById('contractAddress').innerText = contractAddress;
+            document.getElementById('highestBidder').innerText = highestBidder;
+            document.getElementById('highestBid').innerText = ethers.utils.formatEther(highestBid);
+            document.getElementById('auctionEndTime').innerText = new Date(auctionEndTime * 1000).toLocaleString();
+        }
+
+        async function placeInitialBid() {
+            try {
+                await contract.placeInitialBid({ value: ethers.utils.parseEther('1.0') });
+                await updateContractInfo();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function placeBid() {
+            const bidAmount = document.getElementById('bidAmount').value;
+            try {
+                await contract.bid({ value: ethers.utils.parseEther(bidAmount) });
+                await updateContractInfo();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function endAuction() {
+            try {
+                await contract.endAuction();
+                await updateContractInfo();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // Initial update
+        updateContractInfo();
+    </script>
+</body>
+
+</html>
